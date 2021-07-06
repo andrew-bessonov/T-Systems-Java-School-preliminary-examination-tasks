@@ -1,7 +1,5 @@
 package com.tsystems.javaschool.tasks.calculator;
 
-import org.mariuszgromada.math.mxparser.Expression;
-
 public class Calculator {
 
     /**
