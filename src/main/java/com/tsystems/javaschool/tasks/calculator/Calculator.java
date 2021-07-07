@@ -18,63 +18,63 @@ public class Calculator {
         Stack stack1 = new Stack();
         boolean key = false;
 
-        if (!pi(statement)) { // Check brackets
+        if (!pi(statement)) {
             System.out.println("Brackets do not match");
             return null;
         }
 
-        // Циклом по всей строке
         for (int i = 0; i < statement.length(); i++) {
-
-            // Ищем число или функцию
-            char c = statement.charAt(i); // Берем один символ (С)
-            while (!isFu(c) && !isNumber(c)) { // Пока это не функция и не число
-                if (++i < statement.length()) // Если строка еще не закончилась
-                    c = statement.charAt(i); // Заменяем этот символ (С)
-                if (i == statement.length()) // Если это был последний символ
-                    break; // Остановить цикл
+            char c = statement.charAt(i);
+            while (!isfu(c) && !isNumber(c)) {
+                ++i;
+                if(i < statement.length())
+                    c = statement.charAt(i);
+                if( i == statement.length())
+                    break;
             }
-
-            if (i == statement.length()) // Если это был последний символ
-                break; // Остановить цикл
-
+            if ( i == statement.length())
+                break;
             StringBuilder SB = new StringBuilder("");
-
-            if (c == '-' && key) { // Если символ '-' и key
-                if (++i < statement.length()) // Если строка еще не закончилась
-                    c = statement.charAt(i); // Заменяем этот символ (С)
-                SB.append('-'); // Добавляем функцию в SB
+            if (c == '-' && key) {
+                ++i;
+                if(i < statement.length())
+                    c = statement.charAt(i);
+                SB.append('-');
             }
-
-            while (isNumber(c) || c == '.') { // Пока это число или точка
+            while (isNumber(c) || c == '.') {
                 key = false;
-                SB.append(c); // Добавляем число в SB
-                if (++i < statement.length())  // Если строка еще не закончилась
-                    c = statement.charAt(i); // Заменяем этот символ (С)
+                SB.append(c);
+                if (++i >= statement.length()) break;
+                c = statement.charAt(i);
             }
+            if (!SB.toString().equals("")){
+                stack.push(new BigDecimal(SB.toString()));
 
-            if (!SB.toString().equals("")) { // Если SB не пустой
-                stack.push(new BigDecimal(SB.toString())); // Добавляем его содержимое в стак
             }
-
-            if (c == '*' || c == '/' || c == '+' || c == '-') { // Если символ это функция
-                if ((!stack1.empty())) // Если стак1 не пустой
-                    if (((char)stack1.peek() == '*') || ((char)stack1.peek() == '/')) { // Если это * или /
-                        stack.push(stack1.pop()); // То переместить из стак1 в стак
+            if (c == '^') {
+                if ((!stack1.empty()))
+                    if ( ((char)stack1.peek() == '^'))
+                    {
+                        stack.push(stack1.pop());
+                    }
+            }
+            if (c == '*' || c == '/' || c == '+' || c == '-') {
+                if ((!stack1.empty()))
+                    if ( ((char)stack1.peek() == '*') || ((char)stack1.peek() == '/') || ((char)stack1.peek() == '^')) {
+                        stack.push(stack1.pop());
                     }
             }
             if ( c == '+' || c == '-') {
                 if ((!stack1.empty()))
-                    if (((char)stack1.peek() == '*') || ((char)stack1.peek() == '/') || ((char)stack1.peek() == '+') || ((char)stack1.peek() == '-')) {
+                    if ( ((char)stack1.peek() == '*') || ((char)stack1.peek() == '/') || ((char)stack1.peek() == '+') || ((char)stack1.peek() == '-') || ((char)stack1.peek() == '^')) {
                         stack.push(stack1.pop());
                     }
             }
-
-            if (isFu(c)) {
+            if (isfu(c)) {
                 stack1.push(c);
                 key = true;
             }
-            if(c == ')') {
+            if (c == ')') {
                 char cha = c;
                 while (cha != '(') {
                     cha = (char) stack1.pop();
@@ -83,8 +83,6 @@ public class Calculator {
                 }
             }
         }
-
-
         while (!stack1.empty()) {
             stack.push(stack1.pop());
         }
@@ -95,16 +93,21 @@ public class Calculator {
         }
         while (!stack2.empty()) {
             Object c = stack2.pop();
-//            System.out.println(c.getClass() + " " + c);
             if (c.getClass() == BigDecimal.class) {
-                stack1.push((BigDecimal) c);
-//                System.out.println(1);
+                stack1.push(c);
                 continue;
             }
             else {
-//                System.out.println(2);
                 if ((char) c == '*' && (stack1.size() != 1))
                     stack1.push( ( (BigDecimal)stack1.pop() ).multiply( (BigDecimal) stack1.pop() ) );
+                if ((char) c == '^' && (stack1.size() != 1)) {
+                    BigDecimal a = (BigDecimal) stack1.pop();
+                    if(a.intValue() >= 1)
+                        stack1.push(((BigDecimal) stack1.pop()).pow(a.intValue()));
+                    else {
+                        stack1.push(new BigDecimal(Math.pow(((BigDecimal) (stack1.pop())).doubleValue(), a.doubleValue())));
+                    }
+                }
                 if ((char) c == '/' && (stack1.size() != 1)) {
                     Double a = ((BigDecimal) stack1.pop()).doubleValue();
                     stack1.push (new BigDecimal( ( (Double) ( ( (BigDecimal)stack1.pop() ).doubleValue() / a)).toString()));
@@ -113,7 +116,7 @@ public class Calculator {
                     stack1.push(( (BigDecimal)stack1.pop() ).add( (BigDecimal) stack1.pop() ));
                 if ((char) c == '-') {
                     BigDecimal a = (BigDecimal) stack1.pop();
-                    if(!stack1.empty() && stack1.peek().getClass() != char.class ) {
+                    if (!stack1.empty() && stack1.peek().getClass() != char.class ) {
                         stack1.push(((BigDecimal) stack1.pop()).subtract(a));
                     }
                     else
@@ -121,27 +124,25 @@ public class Calculator {
                 }
             }
         }
-        //System.out.printf("%.6s",stack1.pop());
-        return String.format("%.6s", stack1.pop());
+
+        BigDecimal result = (BigDecimal) stack1.pop();
+        return (result.doubleValue() % 1 == 0) ? String.format("%s", result) : String.format("%.6s", result);
     }
 
-    // Check is Number?
     public static boolean isNumber(char c) {
         return c >= '0' && c <= '9';
     }
 
-    // Check is Function?
-    public static boolean isFu(char c) {
-        return c == '+' || c == '-' || c == '*' || c == '/' || c == '(';
+    public static boolean isfu(char c) {
+        return c == '+' || c == '-' || c == '*' || c == '/' || c == '(' || c == '^';
     }
 
-    // Check brackets
     public static boolean pi(String string) {
         Stack<Character> stack = new Stack<>();
-        for(int i = 0; i < string.length(); i++) {
-            if(string.charAt(i) == '(')
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) == '(')
                 stack.push('(');
-            if(string.charAt(i) == ')')
+            if (string.charAt(i) == ')')
                 if(stack.empty() || stack.pop() != '(')
                     return false;
         }
