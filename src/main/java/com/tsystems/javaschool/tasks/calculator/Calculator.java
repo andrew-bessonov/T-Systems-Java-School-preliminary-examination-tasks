@@ -1,7 +1,6 @@
 package com.tsystems.javaschool.tasks.calculator;
 
-import java.math.BigDecimal;
-import java.util.Stack;
+import java.util.*;
 
 public class Calculator {
 
@@ -14,130 +13,108 @@ public class Calculator {
      * @return string value containing result of evaluation or null if statement is invalid
      */
     public String evaluate(String statement) {
-        Stack stack = new Stack();
-        Stack stack1 = new Stack();
-        boolean key = false;
 
-        if (!pi(statement)) {
-            System.out.println("Brackets do not match");
+        // Проверка корректность скобок
+        if (!isValidBrackets(statement) || !isValidSymbols(statement)) { //TODO Сделать проверку что-бы рядом с командами (+ - * /) были только числа или скобки ( )
             return null;
         }
 
-        for (int i = 0; i < statement.length(); i++) {
-            char c = statement.charAt(i);
-            while (!isfu(c) && !isNumber(c)) {
-                ++i;
-                if(i < statement.length())
-                    c = statement.charAt(i);
-                if( i == statement.length())
-                    break;
-            }
-            if ( i == statement.length())
-                break;
-            StringBuilder SB = new StringBuilder("");
-            if (c == '-' && key) {
-                ++i;
-                if(i < statement.length())
-                    c = statement.charAt(i);
-                SB.append('-');
-            }
-            while (isNumber(c) || c == '.') {
-                key = false;
-                SB.append(c);
-                if (++i >= statement.length()) break;
-                c = statement.charAt(i);
-            }
-            if (!SB.toString().equals("")){
-                stack.push(new BigDecimal(SB.toString()));
+        List<String> infixExpressionList = toInfixExpressionList(statement); // Возвращаем лист всех переменных и операций
+        System.out.println(infixExpressionList);
 
-            }
-            if (c == '^') {
-                if ((!stack1.empty()))
-                    if ( ((char)stack1.peek() == '^'))
-                    {
-                        stack.push(stack1.pop());
-                    }
-            }
-            if (c == '*' || c == '/' || c == '+' || c == '-') {
-                if ((!stack1.empty()))
-                    if ( ((char)stack1.peek() == '*') || ((char)stack1.peek() == '/') || ((char)stack1.peek() == '^')) {
-                        stack.push(stack1.pop());
-                    }
-            }
-            if ( c == '+' || c == '-') {
-                if ((!stack1.empty()))
-                    if ( ((char)stack1.peek() == '*') || ((char)stack1.peek() == '/') || ((char)stack1.peek() == '+') || ((char)stack1.peek() == '-') || ((char)stack1.peek() == '^')) {
-                        stack.push(stack1.pop());
-                    }
-            }
-            if (isfu(c)) {
-                stack1.push(c);
-                key = true;
-            }
-            if (c == ')') {
-                char cha = c;
-                while (cha != '(') {
-                    cha = (char) stack1.pop();
-                    if (cha != '(' && cha != ')')
-                        stack.push(cha);
-                }
-            }
-        }
-        while (!stack1.empty()) {
-            stack.push(stack1.pop());
-        }
-        Stack stack2 = new Stack<>();
+        List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
+        System.out.println(suffixExpressionList);
+        //TODO Решить суффикс выражение
 
-        while (!stack.empty()) {
-            stack2.push(stack.pop());
-        }
-        while (!stack2.empty()) {
-            Object c = stack2.pop();
-            if (c.getClass() == BigDecimal.class) {
-                stack1.push(c);
-                continue;
+        String result = calculateRPN(suffixExpressionList);
+
+        return result;
+    }
+
+    public static List<String> toInfixExpressionList(String s){
+        List<String> ls = new ArrayList<>(); // Хранение всех чисел и переменных
+        int i = 0; // Индекс каждого символа
+        char c; // Каждый новый символ помещается в с
+        StringBuilder str;// Склейка нескольких цифр
+
+        do {
+            if (!isNumber(c = s.charAt(i))) { // Если c не является числом, его нужно добавить к ls //TODO не допускать повторяющихся знаков
+                ls.add("" + c);
+                i++;
+            } else { // Если это число, нужно учитывать проблему нескольких цифр.
+                str = new StringBuilder("");
+                while (isNumber(c = s.charAt(i))) { // Пока это числа, склеиваем их
+                    str.append(c);
+                    i ++;
+                    if (i >= s.length()) {
+                        break;
+                    }
+                }
+                ls.add(str.toString()); // Записываем целое число
             }
-            else {
-                if ((char) c == '*' && (stack1.size() != 1))
-                    stack1.push( ( (BigDecimal)stack1.pop() ).multiply( (BigDecimal) stack1.pop() ) );
-                if ((char) c == '^' && (stack1.size() != 1)) {
-                    BigDecimal a = (BigDecimal) stack1.pop();
-                    if(a.intValue() >= 1)
-                        stack1.push(((BigDecimal) stack1.pop()).pow(a.intValue()));
-                    else {
-                        stack1.push(new BigDecimal(Math.pow(((BigDecimal) (stack1.pop())).doubleValue(), a.doubleValue())));
-                    }
+        } while (i < s.length());
+        return ls;
+    }
+
+    public static List<String> ShuntingYard(List<String> infix){
+        List<String> output2 = new ArrayList<>();
+        Deque<String> stack  = new LinkedList<>();
+
+        for (String item : infix) {
+            if (ops.containsKey(item)) { // Если обьект это операция
+                while ( ! stack.isEmpty() && isHigerPrec(item, stack.peek())) {
+                    output2.add(stack.pop());
                 }
-                if ((char) c == '/' && (stack1.size() != 1)) {
-                    Double a = ((BigDecimal) stack1.pop()).doubleValue();
-                    stack1.push (new BigDecimal( ( (Double) ( ( (BigDecimal)stack1.pop() ).doubleValue() / a)).toString()));
+                stack.push(item);
+            } else if (item.equals("(")) {
+                stack.push(item);
+            } else if (item.equals(")")) {
+                while ( ! stack.peek().equals("(")) {
+                    output2.add(stack.pop());
                 }
-                if ((char) c == '+' && (stack1.size() != 1))
-                    stack1.push(( (BigDecimal)stack1.pop() ).add( (BigDecimal) stack1.pop() ));
-                if ((char) c == '-') {
-                    BigDecimal a = (BigDecimal) stack1.pop();
-                    if (!stack1.empty() && stack1.peek().getClass() != char.class ) {
-                        stack1.push(((BigDecimal) stack1.pop()).subtract(a));
-                    }
-                    else
-                        stack1.push((a).multiply(new BigDecimal(-1)));
-                }
+                stack.pop();
+            } else {
+                output2.add(item);
             }
         }
 
-        BigDecimal result = (BigDecimal) stack1.pop();
-        return (result.doubleValue() % 1 == 0) ? String.format("%s", result) : String.format("%.6s", result);
+        while ( ! stack.isEmpty()) {
+            output2.add(stack.pop());
+        }
+
+        return output2;
+    }
+
+    private enum Operator {
+        ADD(1), SUBTRACT(2), MULTIPLY(3), DIVIDE(4);
+        final int precedence;
+        Operator(int p) { precedence = p; }
+    }
+
+    private static Map<String, Operator> ops = new HashMap<String, Operator>() {{
+        put("+", Operator.ADD);
+        put("-", Operator.SUBTRACT);
+        put("*", Operator.MULTIPLY);
+        put("/", Operator.DIVIDE);
+    }};
+
+    private static boolean isHigerPrec(String op, String sub) {
+        return (ops.containsKey(sub) && ops.get(sub).precedence >= ops.get(op).precedence);
+    }
+
+    private String calculateRPN(List<String> suffixExpressionList) {
+        return "";
     }
 
     public static boolean isNumber(char c) {
-        return c >= '0' && c <= '9';
+        return (c >= '0' && c <= '9') || c == '.';
     }
 
-    public static boolean isfu(char c) {
-        return c == '+' || c == '-' || c == '*' || c == '/' || c == '(' || c == '^';
+    private boolean isValidSymbols(String statement) {
+        return (statement.matches("^[\\d\\+\\/\\*\\.\\- \\(\\)]*$")); // valid only 1234567890 + / * . - ( )
     }
 
-    public static boolean pi(String string) {
+    public static boolean isValidBrackets(String string) { // После каждой открывающей скобки, должна быть закрывающая
         Stack<Character> stack = new Stack<>();
         for (int i = 0; i < string.length(); i++) {
             if (string.charAt(i) == '(')
