@@ -20,15 +20,11 @@ public class Calculator {
         }
 
         List<String> infixExpressionList = toInfixExpressionList(statement); // Возвращаем лист всех переменных и операций
-        System.out.println(infixExpressionList);
-
+        //System.out.println(infixExpressionList);
         List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
-        System.out.println(suffixExpressionList);
-        //TODO Решить суффикс выражение
+        //System.out.println(suffixExpressionList);
 
-        String result = calculateRPN(suffixExpressionList);
-
-        return result;
+        return calculateRPN(suffixExpressionList);
     }
 
     public static List<String> toInfixExpressionList(String s){
@@ -102,8 +98,29 @@ public class Calculator {
         return (ops.containsKey(sub) && ops.get(sub).precedence >= ops.get(op).precedence);
     }
 
-    private String calculateRPN(List<String> suffixExpressionList) {
-        return "";
+    private String calculateRPN(List<String> suffixEx) {
+        Deque<Double> deque = new LinkedList<>();
+        for (String s : suffixEx) {
+            if (ops.containsKey(s)) {
+                double right = deque.removeFirst();
+                double left = deque.removeFirst();
+                if (s.equals("*")) {
+                    deque.addFirst(left * right);
+                }
+                if (s.equals("/")) {
+                    deque.addFirst(left / right);
+                }
+                if (s.equals("+")) {
+                    deque.addFirst(left + right);
+                }
+                if (s.equals("-")) {
+                    deque.addFirst(left - right);
+                }
+            } else {
+                deque.addFirst(Double.valueOf(s));
+            }
+        }
+        return deque.peekFirst().toString();
     }
 
     public static boolean isNumber(char c) {
