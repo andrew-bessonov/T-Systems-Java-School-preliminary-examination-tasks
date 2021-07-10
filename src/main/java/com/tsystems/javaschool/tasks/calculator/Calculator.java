@@ -14,15 +14,17 @@ public class Calculator {
      */
     public String evaluate(String statement) {
 
-        // Проверка корректность скобок
-        if (!isValidBrackets(statement) || !isValidSymbols(statement)) { //TODO Сделать проверку что-бы рядом с командами (+ - * /) были только числа или скобки ( )
+        if (stringEmpty(statement) || !isValidBrackets(statement) || !isValidSymbols(statement)) {
             return null;
         }
 
         List<String> infixExpressionList = toInfixExpressionList(statement); // Возвращаем лист всех переменных и операций
-        //System.out.println(infixExpressionList);
+
+        if (!isValidFunction(infixExpressionList)) { // Проверка на отсутствие двойных функций (//, *)*, */ и т.п.) не замечая скобки
+            return null;
+        }
+
         List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
-        //System.out.println(suffixExpressionList);
 
         return calculateRPN(suffixExpressionList);
     }
@@ -34,12 +36,13 @@ public class Calculator {
         StringBuilder str;// Склейка нескольких цифр
 
         do {
-            if (!isNumber(c = s.charAt(i))) { // Если c не является числом, его нужно добавить к ls //TODO не допускать повторяющихся знаков
+            if (!isNumberOrDot(c = s.charAt(i))) { // Если c не является числом, его нужно добавить к ls
                 ls.add("" + c);
                 i++;
             } else { // Если это число, нужно учитывать проблему нескольких цифр.
-                str = new StringBuilder("");
-                while (isNumber(c = s.charAt(i))) { // Пока это числа, склеиваем их
+                str = new StringBuilder();
+                boolean doubleDot = false;
+                while (isNumberOrDot(c = s.charAt(i))) { // Пока это числа, склеиваем их
                     str.append(c);
                     i ++;
                     if (i >= s.length()) {
@@ -57,7 +60,7 @@ public class Calculator {
         Deque<String> stack  = new LinkedList<>();
 
         for (String item : infix) {
-            if (ops.containsKey(item)) { // Если обьект это операция
+            if (ops.containsKey(item)) { // Если объект это операция
                 while ( ! stack.isEmpty() && isHigerPrec(item, stack.peek())) {
                     output2.add(stack.pop());
                 }
@@ -65,7 +68,7 @@ public class Calculator {
             } else if (item.equals("(")) {
                 stack.push(item);
             } else if (item.equals(")")) {
-                while ( ! stack.peek().equals("(")) {
+                while ( !(stack.peek() != null && stack.peek().equals("("))) {
                     output2.add(stack.pop());
                 }
                 stack.pop();
@@ -87,7 +90,7 @@ public class Calculator {
         Operator(int p) { precedence = p; }
     }
 
-    private static Map<String, Operator> ops = new HashMap<String, Operator>() {{
+    private static final Map<String, Operator> ops = new HashMap<String, Operator>() {{
         put("+", Operator.ADD);
         put("-", Operator.SUBTRACT);
         put("*", Operator.MULTIPLY);
@@ -108,6 +111,9 @@ public class Calculator {
                     deque.addFirst(left * right);
                 }
                 if (s.equals("/")) {
+                    if (right == 0) { // деление на ноль
+                        return null;
+                    }
                     deque.addFirst(left / right);
                 }
                 if (s.equals("+")) {
@@ -120,20 +126,38 @@ public class Calculator {
                 deque.addFirst(Double.valueOf(s));
             }
         }
-        return deque.peekFirst().toString();
+        if (!deque.isEmpty()) { // Null Pointer Exception
+            double result = deque.peek();
+            return (result % 1 == 0) ? String.valueOf((int)result) : String.valueOf(result); // Убираю ноль после точки
+        } else {
+            return null;
+        }
     }
 
-    public static boolean isNumber(char c) {
+    public static boolean isNumberOrDot(char c) {
         return (c >= '0' && c <= '9') || c == '.';
     }
 
+    private boolean stringEmpty(String statement) {
+        return statement == null || statement.matches("\\s") || statement.equals("");
+    }
+
     private boolean isValidSymbols(String statement) {
-        return (statement.matches("^[\\d\\+\\/\\*\\.\\- \\(\\)]*$")); // valid only 1234567890 + / * . - ( )
+        boolean doubleDot = false;
+        for (int i = 0; i < statement.length() - 1; i++) {
+            if (statement.charAt(i) == '.' && statement.charAt(i + 1) == '.') {
+                doubleDot = true;
+                break;
+            }
+        }
+        return statement.matches("^[\\d+/*.\\- ()]*$") && !doubleDot; // valid only 1234567890 + / * . - ( ) && check dont have double dot
     }
 
     public static boolean isValidBrackets(String string) { // После каждой открывающей скобки, должна быть закрывающая
         Stack<Character> stack = new Stack<>();
         for (int i = 0; i < string.length(); i++) {
+
+
             if (string.charAt(i) == '(')
                 stack.push('(');
             if (string.charAt(i) == ')')
@@ -141,6 +165,26 @@ public class Calculator {
                     return false;
         }
         return stack.empty();
+    }
+
+    private boolean isValidFunction(List<String> infixExpressionList) {
+        if (ops.containsKey(infixExpressionList.get(0))) { // Первый элемент не может быть функцией (+ - * /)
+            return false;
+        }
+        boolean beforeIsFunction = false;
+
+        for (String s : infixExpressionList) {
+            if (ops.containsKey(s)) { // Если этот элемент функция?  || s.equals("(")
+                if (beforeIsFunction) { // И прошлый функция?
+                    return false; // Ошибка
+                } else {
+                    beforeIsFunction = true; // Если прошлый не функция, то меняем boolean
+                }
+            } else if (!(s.equals("(") || s.equals(")"))){
+                beforeIsFunction = false; // Если данный элемент не был функцией, то меняем boolean
+            }
+        }
+        return true; // Если не встретили ни одной ошибки
     }
 }
 
