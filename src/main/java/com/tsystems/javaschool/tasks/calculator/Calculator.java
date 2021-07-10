@@ -18,13 +18,15 @@ public class Calculator {
             return null;
         }
 
-        List<String> infixExpressionList = toInfixExpressionList(statement); // Возвращаем лист всех переменных и операций
+        List<String> infixExpressionList = toInfixExpressionList(statement.replaceAll(" ", "")); // Возвращаем лист всех переменных и операций
+        System.out.println(infixExpressionList);
 
         if (!isValidFunction(infixExpressionList)) { // Проверка на отсутствие двойных функций (//, *)*, */ и т.п.) не замечая скобки
             return null;
         }
 
         List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
+        System.out.println(suffixExpressionList);
 
         return calculateRPN(suffixExpressionList);
     }
@@ -41,7 +43,6 @@ public class Calculator {
                 i++;
             } else { // Если это число, нужно учитывать проблему нескольких цифр.
                 str = new StringBuilder();
-                boolean doubleDot = false;
                 while (isNumberOrDot(c = s.charAt(i))) { // Пока это числа, склеиваем их
                     str.append(c);
                     i ++;
@@ -139,7 +140,7 @@ public class Calculator {
     }
 
     private boolean stringEmpty(String statement) {
-        return statement == null || statement.matches("\\s") || statement.equals("");
+        return statement == null || statement.equals("");
     }
 
     private boolean isValidSymbols(String statement) {
