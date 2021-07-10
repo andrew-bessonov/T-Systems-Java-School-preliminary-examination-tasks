@@ -127,7 +127,7 @@ public class Calculator {
         }
         if (!deque.isEmpty()) { // Null Pointer Exception
             double result = deque.peek();
-            return (result % 1 == 0) ? String.valueOf((int)result) : String.format("%.4f", result); // Убираю ноль после точки
+            return (result % 1 == 0) ? String.valueOf((int)result) : String.format(Locale.US,"%.4f", result); // Убираю ноль после точки
         } else {
             return null;
         }
