@@ -1,5 +1,7 @@
 package com.tsystems.javaschool.tasks.calculator;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 public class Calculator {
@@ -14,77 +16,80 @@ public class Calculator {
      */
     public String evaluate(String statement) {
 
-        if (stringEmpty(statement) || !isValidBrackets(statement) || !isValidSymbols(statement)) {
+        if (stringEmpty(statement) || !isValidBrackets(statement) || !isValidSymbols(statement)) { // Check String empty, correct brackets, correct symbols
             return null;
         }
 
-        List<String> infixExpressionList = toInfixExpressionList(statement.replaceAll(" ", "")); // Возвращаем лист всех переменных и операций
+        List<String> infixExpressionList = toInfixExpressionList(statement.replaceAll(" ", "")); // Return list all values without spaces
 
-        if (!isValidFunction(infixExpressionList)) { // Проверка на отсутствие двойных функций (//, *)*, */ и т.п.) не замечая скобки
+        if (!isValidOperator(infixExpressionList)) { // Checking for the absence of double functions (//, *) *, * /, etc.) without noticing parentheses
             return null;
         }
 
-        List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
+        List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Return suffix expression(RPN) with shunting yard
 
-        return calculateRPN(suffixExpressionList);
+        return calculateRPN(suffixExpressionList); // calculate Revers Poland Notation
     }
 
     public static List<String> toInfixExpressionList(String s){
-        List<String> ls = new ArrayList<>(); // Хранение всех чисел и переменных
-        int i = 0; // Индекс каждого символа
-        char c; // Каждый новый символ помещается в с
-        StringBuilder str;// Склейка нескольких цифр
+        List<String> list = new ArrayList<>(); // Storing all numbers and functions
+        int i = 0; // Iterating over characters
+        char c;
+        StringBuilder str; // Joining multiple numbers
 
         do {
-            if (!isNumberOrDot(c = s.charAt(i))) { // Если c не является числом, его нужно добавить к ls
-                ls.add("" + c);
+            if (!isNumberOrDot(c = s.charAt(i))) { // If c is not a number, add it to list
+                list.add("" + c);
                 i++;
-            } else { // Если это число, нужно учитывать проблему нескольких цифр.
+            } else { // If this is a number, it can be large
                 str = new StringBuilder();
-                while (isNumberOrDot(c = s.charAt(i))) { // Пока это числа, склеиваем их
+                while (isNumberOrDot(c = s.charAt(i))) { // While these are numbers, stick them
                     str.append(c);
                     i ++;
                     if (i >= s.length()) {
                         break;
                     }
                 }
-                ls.add(str.toString()); // Записываем целое число
+                list.add(str.toString()); // Add ready number
             }
         } while (i < s.length());
-        return ls;
+        return list;
     }
 
     public static List<String> ShuntingYard(List<String> infix){
-        List<String> output2 = new ArrayList<>();
-        Deque<String> stack  = new LinkedList<>();
+        List<String> output = new ArrayList<>(); // result list
+        Deque<String> stack  = new LinkedList<>(); // temp storage for brackets expressions
 
         for (String item : infix) {
-            if (ops.containsKey(item)) { // Если объект это операция
-                while ( ! stack.isEmpty() && isHigerPrec(item, stack.peek())) {
-                    output2.add(stack.pop());
+            if (ops.containsKey(item)) { // if item is operator
+                while ( ! stack.isEmpty() && isHigherPre(item, stack.peek())) { // if stack is not empty and item higher priority of top item stack
+                    output.add(stack.pop()); // list add top item stack
                 }
-                stack.push(item);
+                stack.push(item); // last add operator item
             } else if (item.equals("(")) {
                 stack.push(item);
             } else if (item.equals(")")) {
                 while ( !(stack.peek() != null && stack.peek().equals("("))) {
-                    output2.add(stack.pop());
+                    output.add(stack.pop()); // write to list full brackets expressions
                 }
                 stack.pop();
             } else {
-                output2.add(item);
+                output.add(item); // write numbers
             }
         }
 
         while ( ! stack.isEmpty()) {
-            output2.add(stack.pop());
+            output.add(stack.pop()); // stack to list
         }
 
-        return output2;
+        return output;
     }
 
-    private enum Operator {
-        ADD(1), SUBTRACT(2), MULTIPLY(3), DIVIDE(4);
+    private enum Operator { // enum operators with precedence
+        ADD(1),
+        SUBTRACT(2),
+        MULTIPLY(3),
+        DIVIDE(4);
         final int precedence;
         Operator(int p) { precedence = p; }
     }
@@ -96,7 +101,7 @@ public class Calculator {
         put("/", Operator.DIVIDE);
     }};
 
-    private static boolean isHigerPrec(String op, String sub) {
+    private static boolean isHigherPre(String op, String sub) {
         return (ops.containsKey(sub) && ops.get(sub).precedence >= ops.get(op).precedence);
     }
 
@@ -110,7 +115,7 @@ public class Calculator {
                     deque.addFirst(left * right);
                 }
                 if (s.equals("/")) {
-                    if (right == 0) { // деление на ноль
+                    if (right == 0) { // divide for zero
                         return null;
                     }
                     deque.addFirst(left / right);
@@ -126,8 +131,9 @@ public class Calculator {
             }
         }
         if (!deque.isEmpty()) { // Null Pointer Exception
-            double result = deque.peek();
-            return (result % 1 == 0) ? String.valueOf((int)result) : String.format(Locale.US,"%.4f", result); // Убираю ноль после точки
+            DecimalFormat df = new DecimalFormat("0.####", DecimalFormatSymbols.getInstance(Locale.ENGLISH)); // formatting
+            df.setMaximumFractionDigits(4);
+            return df.format(deque.peek());
         } else {
             return null;
         }
@@ -142,21 +148,19 @@ public class Calculator {
     }
 
     private boolean isValidSymbols(String statement) {
-        boolean doubleDot = false;
+        boolean doubleDot = false; // check for double dot
         for (int i = 0; i < statement.length() - 1; i++) {
             if (statement.charAt(i) == '.' && statement.charAt(i + 1) == '.') {
                 doubleDot = true;
                 break;
             }
         }
-        return statement.matches("^[\\d+/*.\\- ()]*$") && !doubleDot; // valid only 1234567890 + / * . - ( ) && check dont have double dot
+        return statement.matches("^[\\d+/*.\\- ()]*$") && !doubleDot; // valid only 1234567890 + / * . - ( ) symbols && check dont have double dot
     }
 
-    public static boolean isValidBrackets(String string) { // После каждой открывающей скобки, должна быть закрывающая
+    public static boolean isValidBrackets(String string) { // After each opening brackets, there must be a closing
         Stack<Character> stack = new Stack<>();
         for (int i = 0; i < string.length(); i++) {
-
-
             if (string.charAt(i) == '(')
                 stack.push('(');
             if (string.charAt(i) == ')')
@@ -166,24 +170,23 @@ public class Calculator {
         return stack.empty();
     }
 
-    private boolean isValidFunction(List<String> infixExpressionList) {
-        if (ops.containsKey(infixExpressionList.get(0))) { // Первый элемент не может быть функцией (+ - * /)
+    private boolean isValidOperator(List<String> infixExpressionList) {
+        if (ops.containsKey(infixExpressionList.get(0))) { // First item dont be a operator (+ - * /)
             return false;
         }
-        boolean beforeIsFunction = false;
 
-        for (String s : infixExpressionList) {
-            if (ops.containsKey(s)) { // Если этот элемент функция?  || s.equals("(")
-                if (beforeIsFunction) { // И прошлый функция?
-                    return false; // Ошибка
+        boolean beforeIsOperator = false;
+        for (String s : infixExpressionList) { // check for double operator ignoring brackets
+            if (ops.containsKey(s)) {
+                if (beforeIsOperator) {
+                    return false;
                 } else {
-                    beforeIsFunction = true; // Если прошлый не функция, то меняем boolean
+                    beforeIsOperator = true;
                 }
             } else if (!(s.equals("(") || s.equals(")"))){
-                beforeIsFunction = false; // Если данный элемент не был функцией, то меняем boolean
+                beforeIsOperator = false;
             }
         }
-        return true; // Если не встретили ни одной ошибки
+        return true;
     }
 }
-
