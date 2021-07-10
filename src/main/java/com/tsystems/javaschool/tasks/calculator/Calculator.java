@@ -19,14 +19,12 @@ public class Calculator {
         }
 
         List<String> infixExpressionList = toInfixExpressionList(statement.replaceAll(" ", "")); // Возвращаем лист всех переменных и операций
-        System.out.println(infixExpressionList);
 
         if (!isValidFunction(infixExpressionList)) { // Проверка на отсутствие двойных функций (//, *)*, */ и т.п.) не замечая скобки
             return null;
         }
 
         List<String> suffixExpressionList = ShuntingYard(infixExpressionList); // Возвращает суффикс выражение в виде листа
-        System.out.println(suffixExpressionList);
 
         return calculateRPN(suffixExpressionList);
     }
@@ -129,7 +127,7 @@ public class Calculator {
         }
         if (!deque.isEmpty()) { // Null Pointer Exception
             double result = deque.peek();
-            return (result % 1 == 0) ? String.valueOf((int)result) : String.valueOf(result); // Убираю ноль после точки
+            return (result % 1 == 0) ? String.valueOf((int)result) : String.format("%.4f", result); // Убираю ноль после точки
         } else {
             return null;
         }
