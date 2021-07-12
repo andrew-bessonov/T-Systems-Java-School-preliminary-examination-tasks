@@ -1,7 +1,9 @@
 package com.tsystems.javaschool.tasks.pyramid;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class PyramidBuilder {
 
@@ -15,35 +17,41 @@ public class PyramidBuilder {
      */
     public int[][] buildPyramid(List<Integer> inputNumbers) {
 
-        // check is empty
-        if (inputNumbers.isEmpty()) {
+        // check is empty and null
+        if (inputNumbers.isEmpty() || inputNumbers.contains(null)) {
             throw new CannotBuildPyramidException();
         }
 
-        // check correct numbers of elements
-        int height = 0;
-        int width = 0;
+        int row = 0;
+        int column;
         int elements = 0;
+
         while (elements < inputNumbers.size()) {
-            height++; // add row
-            if (height == 1) // if row is first?
-                width++; // add only one column
-            else
-                width += 2; // else add two column
-            elements = elements + height;
+            row++;
+            elements = elements + row;
         }
+        column = row * 2 - 1;
+
+        // check correct numbers of elements
         if (inputNumbers.size() != elements) {
             throw new CannotBuildPyramidException();
         }
 
-        System.out.printf("height = %d, weight = %d, elements = %d", height, width, elements);
-
         // sort elements
         Collections.sort(inputNumbers);
 
-        // result array
-        int[][] result = new int[height][width];
+        int[][] result = new int[row][column]; // result array
+        Queue<Integer> queue = new LinkedList<>(inputNumbers); // use Queue to easy remove items
+        int startPos = column / 2; // start position
 
+        for (int i = 0; i < result.length; i++) {
+            int nextPos = startPos;
+            for (int j = 0; j <= i; j++) {
+                result[i][nextPos] = queue.remove();
+                nextPos += 2;
+            }
+            startPos--;
+        }
 
         return result;
     }
