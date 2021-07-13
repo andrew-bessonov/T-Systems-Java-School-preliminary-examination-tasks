@@ -17,36 +17,35 @@ public class Subsequence {
     @SuppressWarnings("rawtypes")
     public boolean find(List<?> x, List<?> y) {
 
-        if(x == null || y == null) {
+        if (x == null || y == null) {
             throw new IllegalArgumentException();
         }
-
-        if(x.size() > y.size()) {
+        if (x.size() > y.size()) {
             return false;
         }
-
-        if(x.isEmpty()) {
+        if (x.isEmpty() || x.equals(y)) {
             return true;
         }
 
+        // Create two queue for simple remove
         Queue yQueue = new LinkedList<>(y);
         Queue xQueue = new LinkedList<>(x);
 
-        Object xItem = xQueue.remove();
+        Object xItem = xQueue.remove(); // take first item X
         Object yItem;
 
-        while(!yQueue.isEmpty()) {
-            yItem = yQueue.remove();
+        while (!yQueue.isEmpty()) { // while all Y queue
+            yItem = yQueue.remove(); // take item Y until Y == X
 
-            if(yItem.equals(xItem)) {
-                if(xQueue.isEmpty()) {
+            if (yItem.equals(xItem)) { // if Equals
+                if (xQueue.isEmpty()) { // if X queue is end, all is ok :)
                     return true;
                 }
-                xItem = xQueue.remove();
+                xItem = xQueue.remove(); // take next X item
             }
         }
 
-        return false;
+        return false; // if we remove all Y queue, and not finished X queue. Result means false.
 
 
     }
