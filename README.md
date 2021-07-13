@@ -12,10 +12,8 @@ The exam includes 3 tasks to be done: [Calculator](/tasks/Calculator.md), [Pyram
 ### Result ###
 
 * Author name : Andrei Bessonov
-* Codeship : {PUT YOUR CODESHIP BAGDE HERE}
+* Codeship : [![Codeship Status for bessik050/javaSchoolExam](https://app.codeship.com/projects/344685cf-49ff-4db1-83e8-5d94a5af062d/status?branch=master)](https://app.codeship.com/projects/449098)
 
-Example of Codeship badge. Please remove the example before you send us the link. 
-[ ![Codeship Status for tschool/javaschoolexam](https://app.codeship.com/projects/a9af8940-d130-0134-89a6-5e8aaaa2a5a2/status?branch=master)](https://app.codeship.com/projects/201451)
 
 
 ### How to start?  ###
