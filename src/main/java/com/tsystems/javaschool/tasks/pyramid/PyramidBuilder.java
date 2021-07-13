@@ -8,7 +8,7 @@ import java.util.Queue;
 public class PyramidBuilder {
 
     /**
-     * Builds a pyramid with sorted values (with minumum value at the top line and maximum at the bottom,
+     * Builds a pyramid with sorted values (with minimum value at the top line and maximum at the bottom,
      * from left to right). All vacant positions in the array are zeros.
      *
      * @param inputNumbers to be used in the pyramid
@@ -22,20 +22,14 @@ public class PyramidBuilder {
             throw new CannotBuildPyramidException();
         }
 
-        int row = 0;
-        int column;
-        int elements = 0;
+        int row = getRowNumber(inputNumbers);
 
-        while (elements < inputNumbers.size()) {
-            row++;
-            elements = elements + row;
-        }
-        column = row * 2 - 1;
-
-        // check correct numbers of elements
-        if (inputNumbers.size() != elements) {
+        // if getRowNumber is uncorrected numbers of elements
+        if(row == -1) {
             throw new CannotBuildPyramidException();
         }
+        // correct column is 1-1, 2-3, 3-5, 4-7, 5-9, where row-column.
+        int column = row * 2 - 1;
 
         // sort elements
         Collections.sort(inputNumbers);
@@ -54,6 +48,15 @@ public class PyramidBuilder {
         }
 
         return result;
+    }
+
+    private static int getRowNumber(List<Integer> input) {
+        double result = (Math.sqrt(1 + 8 * input.size()) - 1) / 2;
+        if (result == Math.ceil(result)) {
+            return (int) result;
+        } else {
+            return -1;
+        }
     }
 
 
